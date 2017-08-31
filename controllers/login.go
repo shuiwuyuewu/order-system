@@ -1,7 +1,13 @@
 package controllers
 
 import (
+	"errors"
+
 	"github.com/astaxie/beego"
+)
+
+var (
+	errUser = errors.New("illegal user")
 )
 
 type LoginController struct {
@@ -31,4 +37,20 @@ func (c *LoginController) Post() {
 	// TODO: check user token
 	c.TplName = "manage.tpl"
 	return
+}
+
+func checkUser(token int) (isAdmin bool, err error) {
+	if token == 111 {
+		isAdmin = true
+		err = nil
+		return
+	} else if token == 222 {
+		isAdmin = false
+		err = nil
+		return
+	} else {
+		isAdmin = false
+		err = errUser
+		return
+	}
 }
