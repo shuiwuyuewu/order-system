@@ -1,27 +1,19 @@
 package controllers
 
 import (
-	"errors"
-
 	"github.com/astaxie/beego"
 )
 
-var (
-	errUser = errors.New("illegal user")
-)
+type loginFail struct {
+	Result       int
+	RedirectPath string
+}
 
 type LoginController struct {
 	beego.Controller
 }
 
 func (c *LoginController) Get() {
-	token := c.GetSession("user-token")
-	if token != nil {
-		// check user
-		c.TplName = "manage.tpl"
-		return
-	}
-
 	c.TplName = "login.tpl"
 }
 
@@ -32,25 +24,22 @@ func (c *LoginController) Post() {
 
 	if len(autoLogin) != 0 {
 		c.SetSession("user-token", token)
-	}
-
-	// TODO: check user token
-	c.TplName = "manage.tpl"
-	return
-}
-
-func checkUser(token int) (isAdmin bool, err error) {
-	if token == 111 {
-		isAdmin = true
-		err = nil
-		return
-	} else if token == 222 {
-		isAdmin = false
-		err = nil
-		return
 	} else {
-		isAdmin = false
-		err = errUser
+		c.DelSession("user-token")
+	}
+
+	if isAdmin, err := CheckUser(token); err == nil {
+		ret := loginFail{2, "/search"}
+		if isAdmin {
+			ret.RedirectPath = "/manage"
+		}
+		c.Data["json"] = &ret
+		c.ServeJSON()
 		return
 	}
+
+	ret := loginFail{1, "/login"}
+	c.Data["json"] = &ret
+	c.ServeJSON()
+	return
 }
